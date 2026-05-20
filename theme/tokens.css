@@ -1,0 +1,29 @@
+@theme {
+  /* Brand */
+  --color-memorise-navy: #03152e;
+  --color-memorise-blue: #0ea5ff; /* Electric Blue */
+  --color-memorise-sky-blue: #4dd8ff;
+  --color-memorise-ice-blue: #aeebff;
+
+  /* Semantic */
+  --color-success: #22c55e;
+  --color-warning: #ffc857;
+  --color-streak: #ff9f1c;
+  --color-error: #ff4d6d;
+  --color-info: #38bdf8;
+
+  /* Neutrals */
+  --color-text-primary: #f5f9ff;
+  --color-text-secondary: #94a3b8;
+  --color-border: #16324f;
+  --color-surface: #071c35;
+  --color-background: #020b18;
+
+  /* Fonts */
+  --font-sans: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+
+  /* Radii */
+  --radius-card: 24px;
+}
+
