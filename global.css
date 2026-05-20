@@ -137,4 +137,24 @@
   .pill {
     border-radius: 9999px;
   }
+
+  /* Auth */
+  .auth-input {
+    background-color: var(--color-surface);
+    border-color: var(--color-border);
+    border-width: 1px;
+    border-radius: 16px;
+  }
+
+  .auth-social-btn {
+    background-color: var(--color-surface);
+    border-color: var(--color-border);
+    border-width: 1px;
+    border-radius: 16px;
+  }
+
+  .auth-divider-line {
+    background-color: var(--color-border);
+    height: 1px;
+  }
 }

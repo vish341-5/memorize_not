@@ -62,7 +62,7 @@ export default function OnboardingScreen() {
           style={{
             experimental_backgroundImage: BUTTON_GRADIENT,
           }}
-          onPress={() => router.replace("/home")}
+          onPress={() => router.replace("/sign-up")}
         >
           <View className="h-full flex-row items-center justify-center px-6">
             <Text

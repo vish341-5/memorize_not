@@ -16,5 +16,5 @@ export default function RootLayout() {
   }, [loaded]);
 
   if (!loaded) return null;
-  return <Stack />;
+  return <Stack initialRouteName="onboarding" />;
 }
