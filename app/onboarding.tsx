@@ -1,7 +1,8 @@
 import { images } from "@/constants/images";
+import { useAuth } from "@clerk/expo";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import { router, Stack } from "expo-router";
+import { Redirect, router, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -13,6 +14,12 @@ const MASCOT_GLOW =
   "radial-gradient(circle at center, rgba(14, 165, 255, 0.28) 0%, transparent 72%)";
 
 export default function OnboardingScreen() {
+  const { isSignedIn, isLoaded } = useAuth();
+
+  if (isLoaded && isSignedIn) {
+    return <Redirect href="/" />;
+  }
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#020b18" }}>
       <Stack.Screen options={{ headerShown: false }} />

@@ -1,6 +1,7 @@
-import { router } from "expo-router";
+import { getClerkErrorMessage } from "@/lib/auth";
 import { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -13,27 +14,51 @@ import {
 type VerificationModalProps = {
   visible: boolean;
   onClose: () => void;
+  onVerify: (code: string) => Promise<void>;
+  isLoading?: boolean;
 };
 
-export function VerificationModal({ visible, onClose }: VerificationModalProps) {
+export function VerificationModal({
+  visible,
+  onClose,
+  onVerify,
+  isLoading = false,
+}: VerificationModalProps) {
   const [code, setCode] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<TextInput>(null);
+
+  const focusInput = () => {
+    if (inputRef.current?.isFocused()) {
+      inputRef.current.blur();
+      setTimeout(() => inputRef.current?.focus(), 50);
+      return;
+    }
+
+    inputRef.current?.focus();
+  };
 
   useEffect(() => {
     if (visible) {
       setCode("");
+      setError(null);
       const timer = setTimeout(() => inputRef.current?.focus(), 100);
       return () => clearTimeout(timer);
     }
   }, [visible]);
 
-  const handleCodeChange = (value: string) => {
+  const handleCodeChange = async (value: string) => {
     const digits = value.replace(/\D/g, "").slice(0, 6);
     setCode(digits);
+    setError(null);
 
-    if (digits.length === 6) {
-      onClose();
-      router.replace("/");
+    if (digits.length === 6 && !isLoading) {
+      try {
+        await onVerify(digits);
+      } catch (err) {
+        setCode("");
+        setError(getClerkErrorMessage(err));
+      }
     }
   };
 
@@ -56,8 +81,14 @@ export function VerificationModal({ visible, onClose }: VerificationModalProps) 
             continue.
           </Text>
 
+          {error ? (
+            <Text className="text-body-sm text-error mt-3 text-center">
+              {error}
+            </Text>
+          ) : null}
+
           <Pressable
-            onPress={() => inputRef.current?.focus()}
+            onPress={focusInput}
             className="mt-6 flex-row justify-between gap-2"
           >
             {Array.from({ length: 6 }).map((_, index) => (
@@ -79,8 +110,12 @@ export function VerificationModal({ visible, onClose }: VerificationModalProps) 
             ref={inputRef}
             value={code}
             onChangeText={handleCodeChange}
-            keyboardType="number-pad"
+            keyboardType="numeric"
+            showSoftInputOnFocus={true}
+            blurOnSubmit={false}
             maxLength={6}
+            editable={!isLoading}
+            autoCorrect={false}
             textContentType="oneTimeCode"
             autoComplete="one-time-code"
             style={{
@@ -91,9 +126,13 @@ export function VerificationModal({ visible, onClose }: VerificationModalProps) 
             }}
           />
 
-          <Pressable onPress={onClose} className="mt-6 items-center">
-            <Text className="text-body-md text-brand">Cancel</Text>
-          </Pressable>
+          {isLoading ? (
+            <ActivityIndicator className="mt-6" color="#0ea5ff" />
+          ) : (
+            <Pressable onPress={onClose} className="mt-6 items-center">
+              <Text className="text-body-md text-brand">Cancel</Text>
+            </Pressable>
+          )}
         </View>
       </KeyboardAvoidingView>
     </Modal>

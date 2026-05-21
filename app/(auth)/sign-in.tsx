@@ -1,11 +1,15 @@
 import { VerificationModal } from "@/components/verification-modal";
 import { images } from "@/constants/images";
+import { useClerkOAuth } from "@/hooks/use-clerk-oauth";
+import { getClerkErrorMessage, navigateAfterAuth } from "@/lib/auth";
+import { useSignIn } from "@clerk/expo";
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { Link, router, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -21,11 +25,94 @@ const BUTTON_GRADIENT =
 
 export default function SignInScreen() {
   const insets = useSafeAreaInsets();
+  const { signIn, errors, fetchStatus } = useSignIn();
+  const {
+    signInWithApple,
+    signInWithFacebook,
+    signInWithGoogle,
+    isLoading: isOAuthLoading,
+    error: oauthError,
+  } = useClerkOAuth();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [verificationVisible, setVerificationVisible] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  const isSubmitting = fetchStatus === "fetching" || isVerifying;
+
+  const handleLogIn = async () => {
+    if (!email.trim() || !password) {
+      setAuthError("Please enter your email and password.");
+      return;
+    }
+
+    setAuthError(null);
+
+    const { error } = await signIn.password({
+      emailAddress: email.trim(),
+      password,
+    });
+
+    if (error) {
+      setAuthError(
+        errors.fields.identifier?.message ??
+          errors.fields.password?.message ??
+          getClerkErrorMessage(error)
+      );
+      return;
+    }
+
+    if (signIn.status === "complete") {
+      await signIn.finalize({
+        navigate: ({ session, decorateUrl }) => {
+          navigateAfterAuth(router, decorateUrl, session);
+        },
+      });
+      return;
+    }
+
+    if (signIn.status === "needs_client_trust") {
+      const emailCodeFactor = signIn.supportedSecondFactors?.find(
+        (factor) => factor.strategy === "email_code"
+      );
+
+      if (emailCodeFactor) {
+        await signIn.mfa.sendEmailCode();
+        setVerificationVisible(true);
+        return;
+      }
+    }
+
+    setAuthError("Sign-in could not be completed. Please try again.");
+  };
+
+  const handleVerifyCode = async (code: string) => {
+    setIsVerifying(true);
+    setAuthError(null);
+
+    try {
+      const { error: verifyError } = await signIn.mfa.verifyEmailCode({ code });
+
+      if (verifyError) {
+        throw verifyError;
+      }
+
+      const { error: finalizeError } = await signIn.finalize();
+
+      if (finalizeError) {
+        throw finalizeError;
+      }
+
+      setVerificationVisible(false);
+      router.replace("/");
+    } finally {
+      setIsVerifying(false);
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -62,7 +149,7 @@ export default function SignInScreen() {
         <View className="relative mt-10">
           <View
             className="items-center"
-            style={{ marginBottom: -48, zIndex: 10 }}
+            style={{ marginBottom: -14, zIndex: 10 }}
           >
             <Image
               source={images.mascotAuth}
@@ -166,20 +253,33 @@ export default function SignInScreen() {
           </Pressable>
         </View>
 
+        {authError ? (
+          <Text className="text-body-sm text-error mt-3">{authError}</Text>
+        ) : null}
+
+        {oauthError ? (
+          <Text className="text-body-sm text-error mt-3">{oauthError}</Text>
+        ) : null}
+
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Log In"
-          onPress={() => setVerificationVisible(true)}
+          onPress={handleLogIn}
+          disabled={isSubmitting || isOAuthLoading}
           className="mt-6 h-14 overflow-hidden rounded-full"
           style={{ experimental_backgroundImage: BUTTON_GRADIENT }}
         >
           <View className="h-full flex-row items-center justify-center px-6">
-            <Text
-              className="text-primary"
-              style={{ fontFamily: "Poppins-Bold", fontSize: 16 }}
-            >
-              Log In
-            </Text>
+            {isSubmitting ? (
+              <ActivityIndicator color="#f5f9ff" />
+            ) : (
+              <Text
+                className="text-primary"
+                style={{ fontFamily: "Poppins-Bold", fontSize: 16 }}
+              >
+                Log In
+              </Text>
+            )}
             <Ionicons
               name="arrow-forward"
               size={20}
@@ -199,6 +299,8 @@ export default function SignInScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Continue with Google"
+            onPress={signInWithGoogle}
+            disabled={isSubmitting || isOAuthLoading}
             className="auth-social-btn h-14 flex-row items-center justify-center gap-3 px-4"
           >
             <FontAwesome5 name="google" size={20} color="#f5f9ff" />
@@ -210,6 +312,8 @@ export default function SignInScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Continue with Facebook"
+            onPress={signInWithFacebook}
+            disabled={isSubmitting || isOAuthLoading}
             className="auth-social-btn h-14 flex-row items-center justify-center gap-3 px-4"
           >
             <FontAwesome5 name="facebook" size={20} color="#0ea5ff" />
@@ -221,6 +325,8 @@ export default function SignInScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Continue with Apple"
+            onPress={signInWithApple}
+            disabled={isSubmitting || isOAuthLoading}
             className="auth-social-btn h-14 flex-row items-center justify-center gap-3 px-4"
           >
             <FontAwesome5 name="apple" size={22} color="#f5f9ff" />
@@ -245,6 +351,8 @@ export default function SignInScreen() {
       <VerificationModal
         visible={verificationVisible}
         onClose={() => setVerificationVisible(false)}
+        onVerify={handleVerifyCode}
+        isLoading={isVerifying}
       />
     </KeyboardAvoidingView>
   );
