@@ -2,6 +2,7 @@ import { VerificationModal } from "@/components/verification-modal";
 import { images } from "@/constants/images";
 import { useClerkOAuth } from "@/hooks/use-clerk-oauth";
 import { getClerkErrorMessage } from "@/lib/auth";
+import { goBackOrReplace } from "@/lib/navigation";
 import { useSignUp } from "@clerk/expo";
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
@@ -147,7 +148,7 @@ export function AuthScreenLayout({
         }}
       >
         <Pressable
-          onPress={() => router.back()}
+          onPress={() => goBackOrReplace("/onboarding")}
           accessibilityRole="button"
           accessibilityLabel="Go back"
           className="mb-6 h-10 w-10 items-center justify-center"

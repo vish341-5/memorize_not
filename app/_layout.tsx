@@ -1,5 +1,6 @@
 import "@/global.css";
 import { fontAssets } from "@/theme/fonts";
+import { useSubjectStore } from "@/store/subject";
 import { ClerkProvider } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
 import { useFonts } from "expo-font";
@@ -17,6 +18,13 @@ if (!process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY) {
 
 export default function RootLayout() {
   const [loaded] = useFonts(fontAssets);
+  const initializeFromStorage = useSubjectStore(
+    (state) => state.initializeFromStorage
+  );
+
+  useEffect(() => {
+    initializeFromStorage();
+  }, [initializeFromStorage]);
 
   useEffect(() => {
     if (loaded) {

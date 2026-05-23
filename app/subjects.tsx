@@ -1,5 +1,7 @@
 import { images } from "@/constants/images";
 import { SUBJECTS } from "@/data/subjects";
+import { goBackOrReplace } from "@/lib/navigation";
+import { useSubjectStore } from "@/store/subject";
 import type { SubjectCode } from "@/types/learning";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
@@ -54,6 +56,16 @@ const subjectDetails: Record<
 export default function SubjectSelectionScreen() {
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState("");
+  const setSelectedSubject = useSubjectStore((state) => state.setSelectedSubject);
+
+  const handleSubjectSelect = async (subjectCode: SubjectCode) => {
+    await setSelectedSubject(subjectCode);
+    router.replace("/");
+  };
+
+  const handleGoBack = () => {
+    goBackOrReplace("/learn");
+  };
 
   const filteredSubjects = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -71,7 +83,7 @@ export default function SubjectSelectionScreen() {
         title.toLowerCase().includes(query)
       );
     });
-  }, [searchQuery, subjectDetails]);
+  }, [searchQuery]);
 
   return (
     <View className="flex-1 bg-app">
@@ -92,7 +104,7 @@ export default function SubjectSelectionScreen() {
         <View className="min-h-full">
           <View className="h-12 flex-row items-center justify-center">
             <Pressable
-              onPress={() => router.back()}
+              onPress={handleGoBack}
               accessibilityRole="button"
               accessibilityLabel="Go back"
               className="absolute left-0 h-12 w-12 items-start justify-center"
@@ -137,6 +149,7 @@ export default function SubjectSelectionScreen() {
               return (
                 <Pressable
                   key={subject.code}
+                  onPress={() => handleSubjectSelect(subject.code)}
                   accessibilityRole="button"
                   accessibilityLabel={`Choose ${details.title}`}
                   className="card h-[124px] flex-row items-center overflow-hidden rounded-[22px] px-4"
