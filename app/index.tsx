@@ -1,7 +1,9 @@
 import { useAuth } from "@clerk/expo";
-import { Link, Redirect, router } from "expo-router";
+import { Link, Redirect, router, type Href } from "expo-router";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+const SUBJECTS_ROUTE = "/subjects" as Href;
 
 export default function HomeScreen() {
   const { isSignedIn, isLoaded, signOut } = useAuth();
@@ -39,6 +41,16 @@ export default function HomeScreen() {
             className="mt-8 rounded-full border border-app px-6 py-3"
           >
             <Text className="text-body-lg text-brand">View Onboarding</Text>
+          </Pressable>
+        </Link>
+
+        <Link href={SUBJECTS_ROUTE} asChild>
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel="Choose a subject to study"
+            className="mt-4 rounded-full bg-brand px-6 py-3"
+          >
+            <Text className="text-body-lg text-primary">Choose Subject</Text>
           </Pressable>
         </Link>
 
